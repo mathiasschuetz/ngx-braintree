@@ -107,6 +107,8 @@ export class NgxBraintreeComponent implements OnInit {
   @Input() enabledStyle: any;
   @Input() disabledStyle: any;
   @Input() hideLoader = false;
+  @Input() enableThreeDSecure = false;
+  @Input() threeDSecureParameters = {};
 
   clientToken: string;
   nonce: string;
@@ -167,6 +169,7 @@ export class NgxBraintreeComponent implements OnInit {
     if (typeof braintree !== 'undefined') {
       this.dropinConfig.authorization = this.clientToken;
       this.dropinConfig.container = '#dropin-container';
+      this.dropinConfig.threeDSecure = this.enableThreeDSecure;
 
       if (this.showCardholderName) {
         this.configureDropinService.configureCardHolderName(this.dropinConfig);
@@ -213,26 +216,28 @@ export class NgxBraintreeComponent implements OnInit {
 
   pay(): void {
     if (this.instance) {
-      this.instance.requestPaymentMethod((err, payload) => {
-        if (err) {
-          console.error(err);
-          this.errorMessage = err;
-          return;
-        } else {
-          this.errorMessage = null;
-        }
-        if (!this.allowChoose) { // process immediately after tokenization
-          this.nonce = payload.nonce;
-          this.showDropinUI = false;
-          this.showLoader = true;
-          this.confirmPay();
-        } else if (this.instance.isPaymentMethodRequestable()) {
-          this.nonce = payload.nonce;
-          this.showDropinUI = false;
-          this.showLoader = true;
-          this.confirmPay();
-        }
-      });
+      this.instance.requestPaymentMethod({
+        threeDSecure: this.threeDSecureParameters
+      }, (err, payload) => {
+          if (err) {
+            console.error(err);
+            this.errorMessage = err;
+            return;
+          } else {
+            this.errorMessage = null;
+          }
+          if (!this.allowChoose) { // process immediately after tokenization
+            this.nonce = payload.nonce;
+            this.showDropinUI = false;
+            this.showLoader = true;
+            this.confirmPay();
+          } else if (this.instance.isPaymentMethodRequestable()) {
+            this.nonce = payload.nonce;
+            this.showDropinUI = false;
+            this.showLoader = true;
+            this.confirmPay();
+          }
+        });
     }
   }
 
